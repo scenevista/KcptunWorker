@@ -56,16 +56,16 @@ Module Manage
         Return False
     End Function
 
-    Public Function CheckServiceState() As (installed As Boolean, running As Boolean)
+    Public Function CheckServiceState() As ServiceState
         Call EnsureServiceFile()
         Dim services = ServiceController.GetServices()
         For Each serv In services
             If serv.ServiceName = "KcptunWorker" Then
-                Return (True, serv.Status = ServiceControllerStatus.Running)
+                Return New ServiceState With {.installed = True, .running = serv.Status = ServiceControllerStatus.Running}
                 Exit For
             End If
         Next
-        Return (False, False)
+        Return New ServiceState With {.installed = False, .running = False}
     End Function
 
     Private Function GetServiceByName(name As String) As ServiceController
@@ -80,7 +80,12 @@ Module Manage
 
     Private Sub EnsureServiceFile(Optional ByVal force As Boolean = False)
         If Not force Then If CheckService() Then Return
-        If Not IO.File.Exists("C:\ProgramData\KcptunWorker\KcptunWorker.exe") Then
+        If Not IO.Directory.Exists("C:\ProgramData\KcptunWorker") Then
+            Directory.CreateDirectory("C:\ProgramData\KcptunWorker")
+            FileCopy(path, "C:\ProgramData\KcptunWorker\KcptunWorker.exe")
+            Return
+        End If
+        If Not File.Exists("C:\ProgramData\KcptunWorker\KcptunWorker.exe") Then
             '逻辑上不会发生，因为服务程序本身已经作为一个程序集被控制器引用了，必须和控制程序放在同一目录内。
             If Not IO.File.Exists(path) Then Throw New IO.FileNotFoundException("未找到源文件，无法复制。")
             FileCopy(path, "C:\ProgramData\KcptunWorker\KcptunWorker.exe")
@@ -162,3 +167,8 @@ Module Manage
     End Sub
 
 End Module
+
+Public Structure ServiceState
+    Public installed As Boolean
+    Public running As Boolean
+End Structure
