@@ -7,7 +7,7 @@ Public Class ConnectionCase
         Options = op
     End Sub
 
-    Private WithEvents Engine As Process
+    Private Engine As Process
     Private log As StreamWriter
 
     Private Property Options As Release
@@ -17,6 +17,9 @@ Public Class ConnectionCase
             Engine.Start()
         Else
             Engine = New Process()
+            AddHandler Engine.OutputDataReceived, AddressOf Engine_OutputDataReceived
+            AddHandler Engine.ErrorDataReceived, AddressOf Engine_ErrorDataReceived
+            AddHandler Engine.Exited, AddressOf Engine_Exited
             Engine.StartInfo = New ProcessStartInfo(Options.ExefilePath, Options.Paramenters)
             With Engine.StartInfo
                 .CreateNoWindow = True
@@ -35,6 +38,9 @@ Public Class ConnectionCase
         Try
             Options.AutoRestart = False
             Engine.Kill()
+            RemoveHandler Engine.OutputDataReceived, AddressOf Engine_OutputDataReceived
+            RemoveHandler Engine.ErrorDataReceived, AddressOf Engine_ErrorDataReceived
+            RemoveHandler Engine.Exited, AddressOf Engine_Exited
             Engine.Close()
             log.Close()
             log = Nothing
@@ -45,11 +51,11 @@ Public Class ConnectionCase
         End Try
     End Sub
 
-    Private Sub Engine_OutputDataReceived(sender As Object, e As DataReceivedEventArgs) Handles Engine.OutputDataReceived
+    Private Sub Engine_OutputDataReceived(sender As Object, e As DataReceivedEventArgs) 'Handles Engine.OutputDataReceived
         If log IsNot Nothing Then log.WriteLine($"[{Date.Now.ToString("yyyy-MM-dd hh:mm:ss")}] [I] {e.Data}")
     End Sub
 
-    Private Sub Engine_Exited(sender As Object, e As EventArgs) Handles Engine.Exited
+    Private Sub Engine_Exited(sender As Object, e As EventArgs) 'Handles Engine.Exited
         If Engine.ExitCode Then
             If Options.AutoRestart Then
                 [Stop]()
@@ -60,7 +66,7 @@ Public Class ConnectionCase
         End If
     End Sub
 
-    Private Sub Engine_ErrorDataReceived(sender As Object, e As DataReceivedEventArgs) Handles Engine.ErrorDataReceived
+    Private Sub Engine_ErrorDataReceived(sender As Object, e As DataReceivedEventArgs) 'Handles Engine.ErrorDataReceived
         If log IsNot Nothing Then log.WriteLine($"[{Date.Now.ToString("yyyy-MM-dd hh:mm:ss")}] [E] {e.Data}")
     End Sub
 

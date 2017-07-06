@@ -1,4 +1,5 @@
 ﻿Imports System.Net
+'配置文件示例：
 '{
 '    "listen": ":29900",
 '    "target": "127.0.0.1:8388",
