@@ -5,10 +5,12 @@ Public Class ConnectionCase
 
     Sub New(op As Release)
         Options = op
+        ar = Options.AutoRestart
     End Sub
 
     Private Engine As Process
     Private log As StreamWriter
+    Private ar As Boolean
 
     Private Property Options As Release
 
@@ -17,8 +19,10 @@ Public Class ConnectionCase
             Engine.Start()
         Else
             Engine = New Process()
-            AddHandler Engine.OutputDataReceived, AddressOf Engine_OutputDataReceived
-            AddHandler Engine.ErrorDataReceived, AddressOf Engine_ErrorDataReceived
+            If Options.EnableLogging Then
+                AddHandler Engine.OutputDataReceived, AddressOf Engine_OutputDataReceived
+                AddHandler Engine.ErrorDataReceived, AddressOf Engine_ErrorDataReceived
+            End If
             AddHandler Engine.Exited, AddressOf Engine_Exited
             Engine.StartInfo = New ProcessStartInfo(Options.ExefilePath, Options.Paramenters)
             With Engine.StartInfo
@@ -31,15 +35,20 @@ Public Class ConnectionCase
             End With
             Engine.Start()
         End If
-        log = New StreamWriter(File.OpenWrite(Options.ExefilePath + ".log"))
+        If Options.EnableLogging Then
+            log = New StreamWriter(File.OpenWrite(Options.ExefilePath + ".log"))
+        End If
+        Options.AutoRestart = ar
     End Sub
 
     Public Sub [Stop]()
         Try
             Options.AutoRestart = False
             Engine.Kill()
-            RemoveHandler Engine.OutputDataReceived, AddressOf Engine_OutputDataReceived
-            RemoveHandler Engine.ErrorDataReceived, AddressOf Engine_ErrorDataReceived
+            If Options.EnableLogging Then
+                RemoveHandler Engine.OutputDataReceived, AddressOf Engine_OutputDataReceived
+                RemoveHandler Engine.ErrorDataReceived, AddressOf Engine_ErrorDataReceived
+            End If
             RemoveHandler Engine.Exited, AddressOf Engine_Exited
             Engine.Close()
             log.Close()
